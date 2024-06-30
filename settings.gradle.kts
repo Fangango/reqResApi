@@ -5,5 +5,5 @@ pluginManagement {
     }
     
 }
-rootProject.name = "ReqresApiROGII"
+rootProject.name = "ReqresApi"
 

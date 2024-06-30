@@ -29,7 +29,6 @@ import java.time.Instant
 @ExtendWith(LoggingTestWatcher::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ReqresTests{
-
     @Nested
     inner class RegisterTests {
         private val registrUrl = buildRequestURL(method = "register")
@@ -42,13 +41,11 @@ class ReqresTests{
                 body = buildRequestBody(ReqRegister(email = "eve.holt@reqres.in", password = "pistol"))
             )
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResRegister::class.java)
-            val respObject = deserializeResponseBody(respBody, ResRegister::class.java)
+            val result = parseResponseBody<ResRegister>(response)
             expect {
-                that(respObject.id).describedAs("id is not equal to 4").isEqualTo(4)
-                that(respObject.token).describedAs("token id not correct").isEqualTo("QpwL5tke4Pnpja7X4")
+                that(result.id).describedAs("id is not equal to 4").isEqualTo(4)
+                that(result.token).describedAs("token id not correct").isEqualTo("QpwL5tke4Pnpja7X4")
             }
         }
 
@@ -68,12 +65,10 @@ class ReqresTests{
                 body = buildRequestBody(ReqRegister(email = email, password = password))
             )
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(400, respCode)
-            checkBodyIsValid(respBody, ErrorRegister::class.java)
-            val respObject = deserializeResponseBody(respBody, ErrorRegister::class.java)
+            val error = parseResponseBody<ErrorRegister>(response)
             expect {
-                that(respObject.error).describedAs("Unexpected error message").isEqualTo(expectation)
+                that(error.error).describedAs("Unexpected error message").isEqualTo(expectation)
             }
         }
     }
@@ -94,14 +89,12 @@ class ReqresTests{
                 body = buildRequestBody(data)
             )
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUpdate::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUpdate::class.java)
+            val result = parseResponseBody<ResUpdate>(response)
             expect {
-                that(respObject.name).describedAs("Unexpected name").isEqualTo(name)
-                that(respObject.job).describedAs("Unexpected name").isEqualTo(job)
-                that(Instant.parse(respObject.updatedAt)).describedAs("updatedAt is not correct")
+                that(result.name).describedAs("Unexpected name").isEqualTo(name)
+                that(result.job).describedAs("Unexpected name").isEqualTo(job)
+                that(Instant.parse(result.updatedAt)).describedAs("updatedAt is not correct")
                     .isApproximatelyEqualTo(currentTime, duration)
             }
         }
@@ -116,14 +109,12 @@ class ReqresTests{
                 body = buildRequestBody(data)
             )
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUpdate::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUpdate::class.java)
+            val result = parseResponseBody<ResUpdate>(response)
             expect {
-                that(respObject.name).describedAs("Unexpected name").isEqualTo(name)
-                that(respObject.job).describedAs("Unexpected name").isEqualTo(job)
-                that(Instant.parse(respObject.updatedAt)).describedAs("updatedAt is not correct")
+                that(result.name).describedAs("Unexpected name").isEqualTo(name)
+                that(result.job).describedAs("Unexpected name").isEqualTo(job)
+                that(Instant.parse(result.updatedAt)).describedAs("updatedAt is not correct")
                     .isApproximatelyEqualTo(currentTime, duration)
             }
         }
@@ -150,12 +141,12 @@ class ReqresTests{
 
     @Nested
     inner class GetUserTests{
-        val userId = 3
-        val email = "emma.wong@reqres.in"
-        val firstName = "Emma"
-        val lastName = "Wong"
-        val avatar = "https://reqres.in/img/faces/3-image.jpg"
-        val user = User(id = userId, email = email, firstName = firstName, lastName = lastName, avatar = avatar)
+        private val userId = 3
+        private val email = "emma.wong@reqres.in"
+        private val firstName = "Emma"
+        private val lastName = "Wong"
+        private val avatar = "https://reqres.in/img/faces/3-image.jpg"
+        private val user = User(id = userId, email = email, firstName = firstName, lastName = lastName, avatar = avatar)
 
         @Test
         fun testGetUser(){
@@ -163,11 +154,9 @@ class ReqresTests{
             val getUserUrl = buildRequestURL(method = "users", resource = userId.toString())
             val response = sendGetRequest(getUserUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUser::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUser::class.java)
-            expectThat(respObject.data).describedAs("User data is not correct").isEqualTo(user)
+            val result = parseResponseBody<ResUser>(response)
+            expectThat(result.data).describedAs("User data is not correct").isEqualTo(user)
         }
 
         @Test
@@ -176,25 +165,23 @@ class ReqresTests{
             val getUserUrl = buildRequestURL(method = "users", resource = "22")
             val response = sendGetRequest(getUserUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(404, respCode)
-            checkBodyIsValid(respBody, ResUser::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUser::class.java)
+            val result = parseResponseBody<ResUser>(response)
             expect {
-                that(respObject.data).describedAs("Unexpected data").isNull()
-                that(respObject.support).describedAs("Unexpected data").isNull()
+                that(result.data).describedAs("Unexpected data").isNull()
+                that(result.support).describedAs("Unexpected data").isNull()
             }
         }
     }
 
     @Nested
     inner class GetResourceTests{
-        val resourceId = 2
-        val name = "fuchsia rose"
-        val year =  2001
-        val color = "#C74375"
-        val pantone_value = "17-2031"
-        val resource = Resource(resourceId, name, year, color, pantone_value)
+        private val resourceId = 2
+        private val name = "fuchsia rose"
+        private val year =  2001
+        private val color = "#C74375"
+        private val pantoneValue = "17-2031"
+        private val resource = Resource(resourceId, name, year, color, pantoneValue)
 
         @Test
         fun testGetResorce(){
@@ -202,11 +189,9 @@ class ReqresTests{
             val getResorceUrl = buildRequestURL(method = "unknown", resource = resourceId.toString())
             val response = sendGetRequest(getResorceUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResource::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResource::class.java)
-            expectThat(respObject.data).describedAs("Resource data is not correct").isEqualTo(resource)
+            val result = parseResponseBody<ResResource>(response)
+            expectThat(result.data).describedAs("Resource data is not correct").isEqualTo(resource)
         }
 
         @Test
@@ -215,13 +200,11 @@ class ReqresTests{
             val getResorceUrl = buildRequestURL(method = "unknown", resource = "23")
             val response = sendGetRequest(getResorceUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(404, respCode)
-            checkBodyIsValid(respBody, ResResource::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResource::class.java)
+            val result = parseResponseBody<ResResource>(response)
             expect {
-                that(respObject.data).describedAs("Unexpected data").isNull()
-                that(respObject.support).describedAs("Unexpected data").isNull()
+                that(result.data).describedAs("Unexpected data").isNull()
+                that(result.support).describedAs("Unexpected data").isNull()
             }
         }
     }
@@ -234,17 +217,15 @@ class ReqresTests{
             val getUsersUrl = buildRequestURL(method = "users")
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(usersWithoutParams).describedAs("User with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -253,21 +234,19 @@ class ReqresTests{
         @Test
         fun testGetUsersWithPageParams(){
             LOGGER.info { "Get Users. Start test: send request with page param" }
-            val queryParams = mapOf<String, String>("page" to "2")
+            val queryParams = mapOf("page" to "2")
             val getUsersUrl = buildRequestURL(method = "users", queryParam = queryParams)
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(2)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.page).describedAs("Unexpected page").isEqualTo(2)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(userWithPageParam).describedAs("User with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -276,21 +255,19 @@ class ReqresTests{
         @Test
         fun testGetUsersWithPerPageParams(){
             LOGGER.info { "Get Users. Start test: send request with per_page param" }
-            val queryParams = mapOf<String, String>("per_page" to "3")
+            val queryParams = mapOf("per_page" to "3")
             val getUsersUrl = buildRequestURL(method = "users", queryParam = queryParams)
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(3)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(4)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(3)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(4)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(usersWitPerPageParam).describedAs("User with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -299,21 +276,19 @@ class ReqresTests{
         @Test
         fun testGetUsersWithAllParams(){
             LOGGER.info { "Get Users. Start test: send request with page and per_page params" }
-            val queryParams = mapOf<String, String>("page" to "2", "per_page" to "4")
+            val queryParams = mapOf("page" to "2", "per_page" to "4")
             val getUsersUrl = buildRequestURL(method = "users", queryParam = queryParams)
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(2)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(4)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(3)
+                that(result.page).describedAs("Unexpected page").isEqualTo(2)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(4)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(3)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(usersWitAllParams).describedAs("User with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -322,41 +297,37 @@ class ReqresTests{
         @Test
         fun testGetUsersWithIncorrectPageParams(){
             LOGGER.info { "Get Users. Start test: send request with incorrect page param" }
-            val queryParams = mapOf<String, String>("page" to "20")
+            val queryParams = mapOf("page" to "20")
             val getUsersUrl = buildRequestURL(method = "users", queryParam = queryParams)
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(20)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
-                that(respObject.data?.size).describedAs("Users list is not empty").isEqualTo(0)
+                that(result.page).describedAs("Unexpected page").isEqualTo(20)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.data?.size).describedAs("Users list is not empty").isEqualTo(0)
             }
         }
 
         @Test
         fun testGetUsersWithBigPerPageParams(){
             LOGGER.info { "Get Users. Start test: send request with incorrect per_page param" }
-            val queryParams = mapOf<String, String>("per_page" to "30")
+            val queryParams = mapOf("per_page" to "30")
             val getUsersUrl = buildRequestURL(method = "users", queryParam = queryParams)
             val response = sendGetRequest(getUsersUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResUsers::class.java)
-            val respObject = deserializeResponseBody(respBody, ResUsers::class.java)
+            val result = parseResponseBody<ResUsers>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(30)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(1)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(30)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(1)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(allUsers).describedAs("User with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -368,20 +339,18 @@ class ReqresTests{
         @Test
         fun testGetResourcesWithoutParams(){
             LOGGER.info { "Get Resources. Start test: send request with default params" }
-            val getResourcessUrl = buildRequestURL(method = "unknown")
-            val response = sendGetRequest(getResourcessUrl)
+            val getResourcesUrl = buildRequestURL(method = "unknown")
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(resourcesWithoutParams).describedAs("Resource with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -390,21 +359,19 @@ class ReqresTests{
         @Test
         fun testGetResourcesWithPageParams(){
             LOGGER.info { "Get Resources. Start test: send request with page param" }
-            val queryParams = mapOf<String, String>("page" to "2")
-            val getResourcessUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
-            val response = sendGetRequest(getResourcessUrl)
+            val queryParams = mapOf("page" to "2")
+            val getResourcesUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(2)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.page).describedAs("Unexpected page").isEqualTo(2)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(resourcesWithPageParam).describedAs("Resource with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -413,21 +380,19 @@ class ReqresTests{
         @Test
         fun testGetResourcesWithPerPageParams(){
             LOGGER.info { "Get Resources. Start test: send request with per_page param" }
-            val queryParams = mapOf<String, String>("per_page" to "3")
-            val getResourcessUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
-            val response = sendGetRequest(getResourcessUrl)
+            val queryParams = mapOf("per_page" to "3")
+            val getResourcesUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(3)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(4)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(3)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(4)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(resourcesWitPerPageParam).describedAs("Resource with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -436,21 +401,19 @@ class ReqresTests{
         @Test
         fun testGetResourcesWithAllParams(){
             LOGGER.info { "Get Resources. Start test: send request with page and per_page params" }
-            val queryParams = mapOf<String, String>("page" to "2", "per_page" to "4")
-            val getResourcessUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
-            val response = sendGetRequest(getResourcessUrl)
+            val queryParams = mapOf("page" to "2", "per_page" to "4")
+            val getResourcesUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(2)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(4)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(3)
+                that(result.page).describedAs("Unexpected page").isEqualTo(2)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(4)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(3)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(resourcesWitAllParams).describedAs("Resource with id=${user.id} not in expected list")
                     .contains(user) }
             }
@@ -459,41 +422,37 @@ class ReqresTests{
         @Test
         fun testGetResourcesWithIncorrectPageParams(){
             LOGGER.info { "Get Resources. Start test: send request with incorrect page param" }
-            val queryParams = mapOf<String, String>("page" to "20")
-            val getResourcessUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
-            val response = sendGetRequest(getResourcessUrl)
+            val queryParams = mapOf("page" to "20")
+            val getResourcesUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(20)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(6)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
-                that(respObject.data?.size).describedAs("Resources list is not empty").isEqualTo(0)
+                that(result.page).describedAs("Unexpected page").isEqualTo(20)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(6)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(2)
+                that(result.data?.size).describedAs("Resources list is not empty").isEqualTo(0)
             }
         }
 
         @Test
         fun testGetResourcesWithBigPerPageParams(){
             LOGGER.info { "Get Resources. Start test: send request with incorrect per_page param" }
-            val queryParams = mapOf<String, String>("per_page" to "30")
-            val getResourcessUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
-            val response = sendGetRequest(getResourcessUrl)
+            val queryParams = mapOf("per_page" to "30")
+            val getResourcesUrl = buildRequestURL(method = "unknown", queryParam = queryParams)
+            val response = sendGetRequest(getResourcesUrl)
             val respCode = response.code
-            val respBody = response.body.string()
             checkResponseCodeEqualTo(200, respCode)
-            checkBodyIsValid(respBody, ResResources::class.java)
-            val respObject = deserializeResponseBody(respBody, ResResources::class.java)
+            val result = parseResponseBody<ResResources>(response)
             expect {
-                that(respObject.page).describedAs("Unexpected page").isEqualTo(1)
-                that(respObject.perPage).describedAs("Unexpected perPage").isEqualTo(30)
-                that(respObject.total).describedAs("Unexpected total").isEqualTo(12)
-                that(respObject.totalPages).describedAs("Unexpected totalPages").isEqualTo(1)
+                that(result.page).describedAs("Unexpected page").isEqualTo(1)
+                that(result.perPage).describedAs("Unexpected perPage").isEqualTo(30)
+                that(result.total).describedAs("Unexpected total").isEqualTo(12)
+                that(result.totalPages).describedAs("Unexpected totalPages").isEqualTo(1)
             }
-            respObject.data?.forEach { user ->
+            result.data?.forEach { user ->
                 expect { that(allResources).describedAs("Resource with id=${user.id} not in expected list")
                     .contains(user) }
             }

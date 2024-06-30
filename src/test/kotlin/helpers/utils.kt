@@ -8,6 +8,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import strikt.api.expectCatching
+import strikt.assertions.isSuccess
 
 
 fun buildRequestURL(method: String, resource: String = "", queryParam: Map<String, String>? = null): String {
@@ -89,5 +91,7 @@ fun sendDeleteRequest(url: String): Response {
     return client.newCall(req).execute()
 }
 
-fun <T> deserializeResponseBody(response: String, clazz: Class<T>): T =
-    jacksonObjectMapper().readValue(response, clazz)
+inline fun <reified T: Any> parseResponseBody(response: Response): T =
+    expectCatching {
+        jacksonObjectMapper().readValue(response.body.string(), T::class.java)
+    }.describedAs("response body is invalid").isSuccess().subject
