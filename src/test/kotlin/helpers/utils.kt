@@ -39,7 +39,7 @@ fun sendPostRequest(url: String, body: String): Response {
         .post(reqBody)
         .header("Content-Type", "application/json")
         .build()
-    LOGGER.info {"Send POST request\n url: ${req.url}\n headers: ${req.headers.toString().trim()}\n body: ${body}"}
+    LOGGER.info {"Send POST request\nURL: ${req.url}\nHEADERS: ${req.headers.toString().trim()}\nBODY: ${body}"}
     return client.newCall(req).execute()
 }
 
@@ -50,7 +50,7 @@ fun sendGetRequest(url: String): Response {
         .get()
         .header("Content-Type", "application/json")
         .build()
-    LOGGER.info {"Send GET request\n url: ${req.url}\n headers: ${req.headers.toString().trim()}"}
+    LOGGER.info {"Send GET request\nURL: ${req.url}\nHEADERS: ${req.headers.toString().trim()}"}
     return client.newCall(req).execute()
 }
 
@@ -63,7 +63,7 @@ fun sendPutRequest(url: String, body: String): Response {
         .put(reqBody)
         .header("Content-Type", "application/json")
         .build()
-    LOGGER.info {"Send PUT request\n url: ${req.url}\n headers: ${req.headers.toString().trim()}\n body: ${body}"}
+    LOGGER.info {"Send PUT request\nURL: ${req.url}\nHEADERS: ${req.headers.toString().trim()}\nBODY: ${body}"}
     return client.newCall(req).execute()
 }
 
@@ -76,7 +76,7 @@ fun sendPatchRequest(url: String, body: String): Response {
         .patch(reqBody)
         .header("Content-Type", "application/json")
         .build()
-    LOGGER.info {"Send PATCH request\n url: ${req.url}\n headers: ${req.headers.toString().trim()}\n body: ${body}"}
+    LOGGER.info {"Send PATCH request\nURL: ${req.url}\nHEADERS: ${req.headers.toString().trim()}\nBODY: ${body}"}
     return client.newCall(req).execute()
 }
 
@@ -87,11 +87,14 @@ fun sendDeleteRequest(url: String): Response {
         .delete()
         .header("Content-Type", "application/json")
         .build()
-    LOGGER.info {"Send DELETE request\n url: ${req.url}\n headers: ${req.headers.toString().trim()}"}
+    LOGGER.info {"Send DELETE request\nURL: ${req.url}\nHEADERS: ${req.headers.toString().trim()}"}
     return client.newCall(req).execute()
 }
 
-inline fun <reified T: Any> parseResponseBody(response: Response): T =
-    expectCatching {
-        jacksonObjectMapper().readValue(response.body.string(), T::class.java)
+inline fun <reified T: Any> parseResponseBody(response: Response): T {
+    val body = response.body.string()
+    LOGGER.info { "Get Response\nHEADERS: ${response.headers.toString().trim()}\nBODY: $body" }
+    return  expectCatching {
+        jacksonObjectMapper().readValue(body, T::class.java)
     }.describedAs("response body is invalid").isSuccess().subject
+}
