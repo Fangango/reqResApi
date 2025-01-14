@@ -18,7 +18,7 @@ dependencies {
     testImplementation("com.google.code.gson:gson:2.10.1")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
     testImplementation("io.github.oshai:kotlin-logging-jvm:6.0.9")
-    testImplementation("ch.qos.logback:logback-classic:1.2.6")
+    testImplementation("ch.qos.logback:logback-classic:1.3.0")
 }
 
 tasks.test {
